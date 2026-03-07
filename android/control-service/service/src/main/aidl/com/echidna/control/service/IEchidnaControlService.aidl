@@ -17,6 +17,9 @@ interface IEchidnaControlService {
     void setTelemetryOptIn(boolean enabled);
     String exportTelemetry(boolean includeTrends);
     void setProfile(String profile);
+    void pushProfileSnapshot(String profileId, String profileJson);
+    void setLatencyModeOverride(String profileId, String latencyMode);
+    void setAppPresetBinding(String packageName, String presetId);
     int getStatus();
     int processBlock(in float[] input, inout float[] output, int frames, int sampleRate, int channelCount);
     long getApiVersion();

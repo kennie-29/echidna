@@ -28,6 +28,7 @@ class ProfileStore(
     private val storageFile = File(storageDir, "profiles.json")
     private val profiles = mutableMapOf<String, JSONObject>()
     private val whitelist = mutableMapOf<String, Boolean>()
+    private val appBindings = mutableMapOf<String, String>()
 
     init {
         if (!storageDir.exists()) {
@@ -91,6 +92,36 @@ class ProfileStore(
         executor.shutdownNow()
     }
 
+    fun setLatencyOverride(profileId: String, latencyMode: String) {
+        val snapshot = lock.write {
+            val profile = profiles[profileId] ?: return
+            profile.put("latencyOverride", latencyMode)
+            profiles[profileId] = profile
+            buildSnapshotLocked()
+        }
+        scheduleFlush(snapshot)
+    }
+
+    fun setAppBinding(packageName: String, presetId: String) {
+        if (!isValidProcessName(packageName)) {
+            Log.w(STORE_TAG, "Rejected invalid package name: $packageName")
+            return
+        }
+        val snapshot = lock.write {
+            if (presetId.isBlank()) {
+                appBindings.remove(packageName)
+            } else {
+                appBindings[packageName] = presetId
+            }
+            buildSnapshotLocked()
+        }
+        scheduleFlush(snapshot)
+    }
+
+    fun getAppBindings(): Map<String, String> = lock.read {
+        appBindings.toMap()
+    }
+
     private fun buildSnapshotLocked(): String {
         val json = JSONObject()
         val profilesJson = JSONObject()
@@ -99,6 +130,9 @@ class ProfileStore(
         val whitelistJson = JSONObject()
         whitelist.forEach { (process, allowed) -> whitelistJson.put(process, allowed) }
         json.put("whitelist", whitelistJson)
+        val bindingsJson = JSONObject()
+        appBindings.forEach { (pkg, presetId) -> bindingsJson.put(pkg, presetId) }
+        json.put("appBindings", bindingsJson)
         return json.toString()
     }
 
@@ -140,6 +174,11 @@ class ProfileStore(
                     whitelist.clear()
                     whitelistJson.keys().forEach { key ->
                         whitelist[key] = whitelistJson.getBoolean(key)
+                    }
+                    val bindingsJson = json.optJSONObject("appBindings") ?: JSONObject()
+                    appBindings.clear()
+                    bindingsJson.keys().forEach { key ->
+                        appBindings[key] = bindingsJson.getString(key)
                     }
                     buildSnapshotLocked()
                 }

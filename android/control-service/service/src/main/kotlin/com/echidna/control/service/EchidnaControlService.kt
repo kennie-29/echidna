@@ -146,6 +146,24 @@ class EchidnaControlService : Service() {
             EchidnaNative.setProfile(payload)
         }
 
+        override fun pushProfileSnapshot(profileId: String?, profileJson: String?) {
+            if (profileId.isNullOrBlank() || profileJson.isNullOrBlank()) {
+                return
+            }
+            profileStore.saveProfile(profileId, profileJson)
+            EchidnaNative.setProfile(profileJson)
+        }
+
+        override fun setLatencyModeOverride(profileId: String?, latencyMode: String?) {
+            if (profileId.isNullOrBlank() || latencyMode.isNullOrBlank()) return
+            profileStore.setLatencyOverride(profileId, latencyMode)
+        }
+
+        override fun setAppPresetBinding(packageName: String?, presetId: String?) {
+            if (packageName.isNullOrBlank()) return
+            profileStore.setAppBinding(packageName, presetId.orEmpty())
+        }
+
         override fun getStatus(): Int = EchidnaNative.getStatus()
 
         override fun processBlock(

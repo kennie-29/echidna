@@ -27,6 +27,8 @@ internal object TelemetryParser {
         if (warningFlags and (1 shl 0) != 0) warnings += "Latency exceeded guard threshold"
         if (warningFlags and (1 shl 1) != 0) warnings += "CPU usage exceeded 75%"
         if (warningFlags and (1 shl 2) != 0) warnings += "XRuns detected"
+        if (warningFlags and (1 shl 3) != 0) warnings += "Preset safety warning active"
+        if (warningFlags and (1 shl 4) != 0) warnings += "Plugin signature verification failed"
 
         val samples = parseSamples(root.optJSONArray("samples"))
         val hooks = parseHooks(root.optJSONArray("hooks"))

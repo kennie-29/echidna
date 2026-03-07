@@ -38,6 +38,8 @@ namespace echidna
             kTelemetryWarningHighLatency = 1u << 0,
             kTelemetryWarningHighCpu = 1u << 1,
             kTelemetryWarningXrun = 1u << 2,
+            kTelemetryWarningPresetSafety = 1u << 3,
+            kTelemetryWarningPluginFailure = 1u << 4,
         };
 
         /**
