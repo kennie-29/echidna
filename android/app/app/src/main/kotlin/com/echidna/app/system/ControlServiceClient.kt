@@ -140,6 +140,38 @@ class ControlServiceClient(private val context: Context) {
         }
     }
 
+    fun updateWhitelist(packageName: String, enabled: Boolean) {
+        try {
+            service?.updateWhitelist(packageName, enabled)
+        } catch (ex: RemoteException) {
+            Log.w(TAG, "Failed to update whitelist", ex)
+        }
+    }
+
+    fun pushProfileSnapshot(profileId: String, profileJson: String) {
+        try {
+            service?.pushProfileSnapshot(profileId, profileJson)
+        } catch (ex: RemoteException) {
+            Log.w(TAG, "Failed to push profile snapshot", ex)
+        }
+    }
+
+    fun setLatencyModeOverride(profileId: String, latencyMode: String) {
+        try {
+            service?.setLatencyModeOverride(profileId, latencyMode)
+        } catch (ex: RemoteException) {
+            Log.w(TAG, "Failed to set latency mode override", ex)
+        }
+    }
+
+    fun setAppPresetBinding(packageName: String, presetId: String) {
+        try {
+            service?.setAppPresetBinding(packageName, presetId)
+        } catch (ex: RemoteException) {
+            Log.w(TAG, "Failed to set app preset binding", ex)
+        }
+    }
+
     companion object {
         private const val TAG = "ControlServiceClient"
     }

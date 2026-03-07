@@ -307,6 +307,26 @@ object ControlStateRepository {
 
     fun sharePreset(presetId: String): String? = exportPreset(presetId)
 
+    fun updateWhitelist(packageName: String, enabled: Boolean) {
+        if (!::serviceClient.isInitialized) return
+        scope.launch {
+            try {
+                serviceClient.updateWhitelist(packageName, enabled)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun setAppPresetBinding(packageName: String, presetId: String) {
+        if (!::serviceClient.isInitialized) return
+        scope.launch {
+            try {
+                serviceClient.setAppPresetBinding(packageName, presetId)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     private fun persistPresets() {
         if (!::context.isInitialized) return
         scope.launch(Dispatchers.IO) {
