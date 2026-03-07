@@ -330,18 +330,22 @@ object ControlStateRepository {
     private fun persistPresets() {
         if (!::context.isInitialized) return
         scope.launch(Dispatchers.IO) {
-            val file = java.io.File(context.filesDir, "echidna_presets.json")
-            val array = org.json.JSONArray()
-            _presets.value.forEach { preset ->
-                val json = PresetSerializer.toJson(preset)
-                array.put(org.json.JSONObject(json))
+            try {
+                val file = java.io.File(context.filesDir, "echidna_presets.json")
+                val array = org.json.JSONArray()
+                _presets.value.forEach { preset ->
+                    val json = PresetSerializer.toJson(preset)
+                    array.put(org.json.JSONObject(json))
+                }
+                val data = org.json.JSONObject().apply {
+                    put("activePresetId", _activePresetId.value)
+                    put("defaultPresetId", _defaultPresetId.value)
+                    put("presets", array)
+                }
+                file.writeText(data.toString())
+            } catch (e: Exception) {
+                android.util.Log.e("ControlStateRepo", "Failed to persist presets", e)
             }
-            val data = org.json.JSONObject().apply {
-                put("activePresetId", _activePresetId.value)
-                put("defaultPresetId", _defaultPresetId.value)
-                put("presets", array)
-            }
-            file.writeText(data.toString())
         }
     }
 

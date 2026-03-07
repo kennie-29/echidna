@@ -50,7 +50,7 @@ class WhitelistEditorViewModel : ViewModel() {
     }
 
     fun addApp(packageName: String) {
-        if (packageName.isBlank()) return
+        if (!isValidPackageName(packageName)) return
         if (_entries.value.any { it.packageName == packageName }) return
         _entries.value = _entries.value + AppEntry(packageName, true, "")
         repo.updateWhitelist(packageName, true)
@@ -59,5 +59,12 @@ class WhitelistEditorViewModel : ViewModel() {
     fun removeApp(packageName: String) {
         _entries.value = _entries.value.filterNot { it.packageName == packageName }
         repo.updateWhitelist(packageName, false)
+    }
+
+    private fun isValidPackageName(name: String): Boolean {
+        val trimmed = name.trim()
+        if (trimmed.isBlank() || trimmed.length > 128) return false
+        if (!trimmed.contains('.')) return false
+        return trimmed.all { it.isLetterOrDigit() || it == '.' || it == '_' || it == ':' }
     }
 }

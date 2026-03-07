@@ -294,6 +294,10 @@ namespace echidna::dsp
    */
   void DspEngine::WorkerLoop()
   {
+    // Watchdog thresholds: 30ms matches a typical audio frame boundary at 48kHz
+    // with 256-frame blocks (~5.3ms). Values beyond 30ms indicate the process
+    // thread is overloaded. 6 consecutive overruns provide a safety margin
+    // before dropping blocks to let the system recover.
     constexpr uint32_t kOverrunThresholdUs = 30000;
     constexpr uint32_t kConsecutiveOverrunLimit = 6;
     uint32_t consecutive_overruns = 0;

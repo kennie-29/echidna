@@ -260,7 +260,7 @@ object PresetSerializer {
                         ))
                     }
                 }
-                EffectModule.Equalizer(enabled, bands, bands.size.coerceAtLeast(3))
+                EffectModule.Equalizer(enabled, bands, obj.optInt("bandCount", 5).coerceAtLeast(bands.size))
             }
             "comp" -> EffectModule.Compressor(
                 enabled = enabled,
