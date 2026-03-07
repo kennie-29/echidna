@@ -27,4 +27,12 @@ class PresetManagerViewModel : ViewModel() {
     fun renamePreset(id: String, name: String) = repo.renamePreset(id, name)
 
     fun setDefaultPreset(id: String) = repo.setDefaultPreset(id)
+
+    fun importPreset(json: String): String? = repo.importPreset(json)
+
+    fun exportPreset(presetId: String): String? = repo.exportPreset(presetId)
+
+    fun exportAllPresets(): String = repo.exportAllPresets()
+
+    fun sharePreset(presetId: String): String? = repo.sharePreset(presetId)
 }

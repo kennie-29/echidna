@@ -1,5 +1,6 @@
 package com.echidna.app.data
 
+import com.echidna.app.model.Band
 import com.echidna.app.model.EffectModule
 import com.echidna.app.model.LatencyMode
 import com.echidna.app.model.MusicalKey
@@ -9,6 +10,45 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object PresetSerializer {
+    fun fromJson(json: String): Preset? {
+        val root = runCatching { JSONObject(json) }.getOrNull() ?: return null
+        val name = root.optString("name").ifBlank { return null }
+        val meta = root.optJSONObject("meta")
+        val description = meta?.optString("description")?.ifBlank { null }
+        val tagsArray = meta?.optJSONArray("tags")
+        val tags = mutableSetOf<String>()
+        if (tagsArray != null) {
+            for (i in 0 until tagsArray.length()) {
+                tagsArray.optString(i)?.let { tags.add(it) }
+            }
+        }
+        val engineObj = root.optJSONObject("engine")
+        val latencyMode = parseLatencyMode(engineObj?.optString("latencyMode"))
+        val modulesArray = root.optJSONArray("modules") ?: return null
+        val modules = mutableListOf<EffectModule>()
+        var dryWet = 50
+        for (i in 0 until modulesArray.length()) {
+            val obj = modulesArray.optJSONObject(i) ?: continue
+            val module = deserializeModule(obj)
+            if (module != null) {
+                modules.add(module)
+                if (module is EffectModule.Mix) {
+                    dryWet = module.dryWetPercent.toInt()
+                }
+            }
+        }
+        if (modules.isEmpty()) return null
+        return Preset(
+            id = java.util.UUID.randomUUID().toString(),
+            name = name,
+            description = description,
+            tags = tags,
+            latencyMode = latencyMode,
+            dryWet = dryWet,
+            modules = modules
+        )
+    }
+
     fun toJson(preset: Preset): String {
         val root = JSONObject()
         root.put("name", preset.name)
@@ -159,4 +199,116 @@ object PresetSerializer {
             MusicalScale.AEOLIAN -> "Aeolian"
             MusicalScale.LOCRIAN -> "Locrian"
         }
+
+    private fun parseLatencyMode(value: String?): LatencyMode =
+        when (value) {
+            "LL" -> LatencyMode.LOW_LATENCY
+            "HQ" -> LatencyMode.HIGH_QUALITY
+            else -> LatencyMode.BALANCED
+        }
+
+    private fun parseKey(value: String?): MusicalKey =
+        when (value) {
+            "C#" -> MusicalKey.C_SHARP
+            "D" -> MusicalKey.D
+            "D#" -> MusicalKey.D_SHARP
+            "E" -> MusicalKey.E
+            "F" -> MusicalKey.F
+            "F#" -> MusicalKey.F_SHARP
+            "G" -> MusicalKey.G
+            "G#" -> MusicalKey.G_SHARP
+            "A" -> MusicalKey.A
+            "A#" -> MusicalKey.A_SHARP
+            "B" -> MusicalKey.B
+            else -> MusicalKey.C
+        }
+
+    private fun parseScale(value: String?): MusicalScale =
+        when (value) {
+            "Minor" -> MusicalScale.MINOR
+            "Chromatic" -> MusicalScale.CHROMATIC
+            "Dorian" -> MusicalScale.DORIAN
+            "Phrygian" -> MusicalScale.PHRYGIAN
+            "Lydian" -> MusicalScale.LYDIAN
+            "Mixolydian" -> MusicalScale.MIXOLYDIAN
+            "Aeolian" -> MusicalScale.AEOLIAN
+            "Locrian" -> MusicalScale.LOCRIAN
+            else -> MusicalScale.MAJOR
+        }
+
+    private fun deserializeModule(obj: JSONObject): EffectModule? {
+        val id = obj.optString("id").ifBlank { return null }
+        val enabled = obj.optBoolean("enabled", true)
+        return when (id) {
+            "gate" -> EffectModule.Gate(
+                enabled = enabled,
+                thresholdDb = obj.optDouble("threshold", -50.0).toFloat(),
+                attackMs = obj.optDouble("attackMs", 5.0).toFloat(),
+                releaseMs = obj.optDouble("releaseMs", 120.0).toFloat(),
+                hysteresisDb = obj.optDouble("hysteresis", 3.0).toFloat()
+            )
+            "eq" -> {
+                val bandsArray = obj.optJSONArray("bands")
+                val bands = mutableListOf<Band>()
+                if (bandsArray != null) {
+                    for (i in 0 until bandsArray.length()) {
+                        val b = bandsArray.optJSONObject(i) ?: continue
+                        bands.add(Band(
+                            frequency = b.optDouble("f", 1000.0).toFloat(),
+                            gainDb = b.optDouble("g", 0.0).toFloat(),
+                            q = b.optDouble("q", 1.0).toFloat()
+                        ))
+                    }
+                }
+                EffectModule.Equalizer(enabled, bands, bands.size.coerceAtLeast(3))
+            }
+            "comp" -> EffectModule.Compressor(
+                enabled = enabled,
+                mode = if (obj.optString("mode") == "auto") EffectModule.CompressorMode.AUTO
+                       else EffectModule.CompressorMode.MANUAL,
+                thresholdDb = obj.optDouble("threshold", -30.0).toFloat(),
+                ratio = obj.optDouble("ratio", 3.0).toFloat(),
+                kneeDb = obj.optDouble("knee", 6.0).toFloat(),
+                attackMs = obj.optDouble("attackMs", 8.0).toFloat(),
+                releaseMs = obj.optDouble("releaseMs", 160.0).toFloat(),
+                makeupGainDb = obj.optDouble("makeup", 0.0).toFloat()
+            )
+            "pitch" -> EffectModule.Pitch(
+                enabled = enabled,
+                semitones = obj.optDouble("semitones", 0.0).toFloat(),
+                cents = obj.optDouble("cents", 0.0).toFloat(),
+                quality = if (obj.optString("quality") == "HQ") EffectModule.PitchQuality.HQ
+                          else EffectModule.PitchQuality.LL,
+                preserveFormants = obj.optBoolean("preserveFormants", true)
+            )
+            "formant" -> EffectModule.Formant(
+                enabled = enabled,
+                cents = obj.optDouble("cents", 0.0).toFloat(),
+                intelligibilityAssist = obj.optBoolean("intelligibility", false)
+            )
+            "autotune" -> EffectModule.AutoTune(
+                enabled = enabled,
+                key = parseKey(obj.optString("key")),
+                scale = parseScale(obj.optString("scale")),
+                retuneMs = obj.optDouble("retuneMs", 120.0).toFloat(),
+                humanizePercent = obj.optDouble("humanize", 50.0).toFloat(),
+                flexTunePercent = obj.optDouble("flexTune", 30.0).toFloat(),
+                formantPreserve = obj.optBoolean("formantPreserve", true),
+                snapStrengthPercent = obj.optDouble("snapStrength", 50.0).toFloat()
+            )
+            "reverb" -> EffectModule.Reverb(
+                enabled = enabled,
+                roomSize = obj.optDouble("room", 10.0).toFloat(),
+                damping = obj.optDouble("damp", 10.0).toFloat(),
+                preDelayMs = obj.optDouble("predelayMs", 0.0).toFloat(),
+                mixPercent = obj.optDouble("mix", 5.0).toFloat()
+            )
+            "mix" -> EffectModule.Mix(
+                enabled = enabled,
+                dryWetPercent = obj.optDouble("wet", 50.0).toFloat(),
+                outputGainDb = obj.optDouble("outGain", 0.0).toFloat()
+            )
+            else -> null
+        }
+    }
 }

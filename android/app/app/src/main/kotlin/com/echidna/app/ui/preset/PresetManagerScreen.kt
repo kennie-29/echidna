@@ -30,7 +30,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.echidna.app.model.Preset
 
 @Composable
-fun PresetManagerScreen(viewModel: PresetManagerViewModel) {
+fun PresetManagerScreen(
+    viewModel: PresetManagerViewModel,
+    onImportRequest: () -> Unit,
+    onExportResult: (String) -> Unit,
+    onShareResult: (String) -> Unit
+) {
     val presets by viewModel.presets.collectAsStateWithLifecycle()
     val active by viewModel.activePreset.collectAsStateWithLifecycle()
     val defaultId by viewModel.defaultPresetId.collectAsStateWithLifecycle()
@@ -47,9 +52,12 @@ fun PresetManagerScreen(viewModel: PresetManagerViewModel) {
         Text(text = "Preset Manager", style = MaterialTheme.typography.headlineSmall)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(onClick = { showCreateDialog = true }) { Text("New Preset") }
-            OutlinedButton(onClick = { /* TODO: import presets */ }) { Text("Import") }
-            OutlinedButton(onClick = { /* TODO: export presets */ }) { Text("Export") }
-            OutlinedButton(onClick = { /* TODO: share preset */ }) { Text("Share") }
+            OutlinedButton(onClick = onImportRequest) { Text("Import") }
+            OutlinedButton(onClick = { onExportResult(viewModel.exportAllPresets()) }) { Text("Export") }
+            OutlinedButton(onClick = {
+                val json = viewModel.sharePreset(active.id)
+                if (json != null) onShareResult(json)
+            }) { Text("Share") }
         }
         Divider()
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {

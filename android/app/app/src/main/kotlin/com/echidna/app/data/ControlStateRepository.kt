@@ -113,6 +113,7 @@ object ControlStateRepository {
     fun initialize(appContext: Context) {
         if (!::context.isInitialized) {
             context = appContext.applicationContext
+            loadPersistedPresets()
             NotificationController.ensureChannel(context)
             NotificationController.updateNotification(context)
             serviceClient = ControlServiceClient(context)
@@ -202,6 +203,7 @@ object ControlStateRepository {
             modules = template.modules.map { cloneModule(it) }
         )
         _presets.value = _presets.value + preset
+        persistPresets()
         return preset.id
     }
 
@@ -218,6 +220,7 @@ object ControlStateRepository {
             if (_defaultPresetId.value == id) {
                 _defaultPresetId.value = filtered.first().id
             }
+            persistPresets()
         }
     }
 
@@ -227,15 +230,18 @@ object ControlStateRepository {
             updatePresetWarnings(preset)
             pushPresetToService(preset)
         }
+        persistPresets()
     }
 
     fun renamePreset(id: String, name: String) {
         _presets.value = _presets.value.map { if (it.id == id) it.copy(name = name) else it }
+        persistPresets()
     }
 
     fun setDefaultPreset(id: String) {
         if (_presets.value.any { it.id == id }) {
             _defaultPresetId.value = id
+            persistPresets()
         }
     }
 
@@ -251,6 +257,16 @@ object ControlStateRepository {
     fun runCompatibilityProbe() {
         scope.launch {
             _compatibilityState.value = null
+            if (::serviceClient.isInitialized) {
+                val snapshot = serviceClient.fetchSnapshot()
+                if (snapshot != null) {
+                    val probeResult = buildCompatibilityFromService(snapshot)
+                    if (probeResult != null) {
+                        _compatibilityState.value = probeResult
+                        return@launch
+                    }
+                }
+            }
             delay(600)
             _compatibilityState.value = CompatibilityResult(
                 selinuxStatus = "Enforcing (ok)",
@@ -266,6 +282,99 @@ object ControlStateRepository {
                 )
             )
         }
+    }
+
+    fun importPreset(json: String): String? {
+        val preset = PresetSerializer.fromJson(json) ?: return null
+        _presets.value = _presets.value + preset
+        persistPresets()
+        return preset.id
+    }
+
+    fun exportPreset(presetId: String): String? {
+        val preset = _presets.value.firstOrNull { it.id == presetId } ?: return null
+        return PresetSerializer.toJson(preset)
+    }
+
+    fun exportAllPresets(): String {
+        val array = org.json.JSONArray()
+        _presets.value.forEach { preset ->
+            val json = PresetSerializer.toJson(preset)
+            array.put(org.json.JSONObject(json))
+        }
+        return array.toString()
+    }
+
+    fun sharePreset(presetId: String): String? = exportPreset(presetId)
+
+    private fun persistPresets() {
+        if (!::context.isInitialized) return
+        scope.launch(Dispatchers.IO) {
+            val file = java.io.File(context.filesDir, "echidna_presets.json")
+            val array = org.json.JSONArray()
+            _presets.value.forEach { preset ->
+                val json = PresetSerializer.toJson(preset)
+                array.put(org.json.JSONObject(json))
+            }
+            val data = org.json.JSONObject().apply {
+                put("activePresetId", _activePresetId.value)
+                put("defaultPresetId", _defaultPresetId.value)
+                put("presets", array)
+            }
+            file.writeText(data.toString())
+        }
+    }
+
+    private fun loadPersistedPresets() {
+        if (!::context.isInitialized) return
+        val file = java.io.File(context.filesDir, "echidna_presets.json")
+        if (!file.exists()) return
+        val data = runCatching { org.json.JSONObject(file.readText()) }.getOrNull() ?: return
+        val array = data.optJSONArray("presets") ?: return
+        val presets = mutableListOf<Preset>()
+        for (i in 0 until array.length()) {
+            val obj = array.optJSONObject(i) ?: continue
+            PresetSerializer.fromJson(obj.toString())?.let { presets.add(it) }
+        }
+        if (presets.isNotEmpty()) {
+            _presets.value = presets
+            val activeId = data.optString("activePresetId")
+            if (presets.any { it.id == activeId }) {
+                _activePresetId.value = activeId
+            } else {
+                _activePresetId.value = presets.first().id
+            }
+            val defaultId = data.optString("defaultPresetId")
+            if (presets.any { it.id == defaultId }) {
+                _defaultPresetId.value = defaultId
+            } else {
+                _defaultPresetId.value = presets.first().id
+            }
+        }
+    }
+
+    private fun buildCompatibilityFromService(snapshot: String): CompatibilityResult? {
+        val root = runCatching { org.json.JSONObject(snapshot) }.getOrNull() ?: return null
+        val selinux = root.optString("selinuxStatus").ifBlank { null } ?: return null
+        val stackArray = root.optJSONArray("audioStack") ?: return null
+        val stacks = mutableListOf<AudioStackProbe>()
+        for (i in 0 until stackArray.length()) {
+            val obj = stackArray.optJSONObject(i) ?: continue
+            stacks.add(AudioStackProbe(
+                name = obj.optString("name"),
+                supported = obj.optBoolean("supported", false),
+                latencyEstimateMs = if (obj.has("latencyEstimateMs")) obj.optInt("latencyEstimateMs") else null,
+                message = obj.optString("message")
+            ))
+        }
+        val notesArray = root.optJSONArray("notes")
+        val notes = mutableListOf<String>()
+        if (notesArray != null) {
+            for (i in 0 until notesArray.length()) {
+                notes.add(notesArray.optString(i))
+            }
+        }
+        return CompatibilityResult(selinux, stacks, notes)
     }
 
     fun refreshEngineStatus(active: Boolean, error: String? = null) {
