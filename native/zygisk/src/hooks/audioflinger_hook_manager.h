@@ -28,8 +28,6 @@ namespace echidna
       const HookInstallInfo &lastInstallInfo() const override { return last_info_; }
 
     private:
-      struct CaptureContext;
-
       static bool Replacement(void *thiz);
       static ssize_t ReplacementRead(void *thiz, void *buffer, size_t bytes);
       static ssize_t ReplacementProcess(void *thiz, void *buffer, size_t bytes);
