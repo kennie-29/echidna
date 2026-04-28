@@ -33,6 +33,8 @@ namespace echidna
                 TelemetryHookRecord record;
             };
 
+        } // namespace
+
             /**
              * @brief On-disk/shared memory packed layout used by the Telemetry region.
              */
@@ -65,7 +67,7 @@ namespace echidna
                 std::array<TelemetryHookPacked, kTelemetryMaxHooks> hooks;
             };
 
-        } // namespace
+
 
         TelemetrySharedMemory::TelemetrySharedMemory()
             : layout_(nullptr), layout_size_(sizeof(SharedLayout)), fd_(-1)
