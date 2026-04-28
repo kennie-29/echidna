@@ -20,7 +20,11 @@ namespace echidna
         AudioHookOrchestrator::AudioHookOrchestrator()
             : aaudio_manager_(resolver_),
               opensl_manager_(resolver_),
-              audiorecord_manager_(resolver_) {}
+              audiorecord_manager_(resolver_),
+              audioflinger_manager_(resolver_),
+              libc_read_manager_(resolver_),
+              tinyalsa_manager_(resolver_),
+              audiohal_manager_(resolver_) {}
 
         bool AudioHookOrchestrator::installHooks()
         {
