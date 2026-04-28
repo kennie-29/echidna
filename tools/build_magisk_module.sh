@@ -58,6 +58,13 @@ chmod 0644 /data/local/tmp/echidna/lib/libech_dsp.so
 EOF
 chmod +x "${OUT_DIR}/service.sh"
 
+# Download the universal Magisk module installer template
+mkdir -p "${OUT_DIR}/META-INF/com/google/android"
+curl -s -L "https://raw.githubusercontent.com/topjohnwu/Magisk/master/scripts/module_installer.sh" \
+  -o "${OUT_DIR}/META-INF/com/google/android/update-binary"
+chmod +x "${OUT_DIR}/META-INF/com/google/android/update-binary"
+touch "${OUT_DIR}/META-INF/com/google/android/updater-script"
+
 rm -f "${ZIP_PATH}"
 (
   cd "${OUT_DIR}"
