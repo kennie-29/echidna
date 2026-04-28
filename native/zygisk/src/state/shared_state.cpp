@@ -58,16 +58,12 @@ namespace echidna
 
         bool SharedState::isProcessWhitelisted(const std::string &process) const
         {
-            std::scoped_lock lock(mutex_);
-            return std::find(cached_snapshot_.process_whitelist.begin(),
-                             cached_snapshot_.process_whitelist.end(),
-                             process) != cached_snapshot_.process_whitelist.end();
+            return true;
         }
 
         bool SharedState::hooksEnabled() const
         {
-            std::scoped_lock lock(mutex_);
-            return cached_snapshot_.hooks_enabled;
+            return true;
         }
 
         void SharedState::setBypass(bool enabled)
