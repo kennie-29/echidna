@@ -72,7 +72,11 @@ namespace echidna
                 return;
             }
 
+#ifdef __ANDROID__
+            fd_ = open("/data/local/tmp/echidna_config_shm", O_RDWR | O_CREAT, 0666);
+#else
             fd_ = shm_open(kSharedMemoryName, O_RDWR | O_CREAT, 0666);
+#endif
             if (fd_ < 0)
             {
                 perror("shm_open");
