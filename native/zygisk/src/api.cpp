@@ -248,31 +248,11 @@ namespace
     /** Load libech_dsp.so and bind its C entrypoints. */
     bool LoadDspLocked(DspBridge &dsp)
     {
-        if (dsp.handle)
-        {
-            return dsp.init && dsp.update && dsp.process && dsp.shutdown;
-        }
-        dsp.handle = dlopen("libech_dsp.so", RTLD_NOW | RTLD_LOCAL);
-        if (!dsp.handle)
-        {
-            return false;
-        }
-        dsp.init = reinterpret_cast<DspBridge::InitFn>(dlsym(dsp.handle, "ech_dsp_initialize"));
-        dsp.update =
-            reinterpret_cast<DspBridge::UpdateFn>(dlsym(dsp.handle, "ech_dsp_update_config"));
-        dsp.process =
-            reinterpret_cast<DspBridge::ProcessFn>(dlsym(dsp.handle, "ech_dsp_process_block"));
-        dsp.shutdown = reinterpret_cast<DspBridge::ShutdownFn>(dlsym(dsp.handle, "ech_dsp_shutdown"));
-        if (!dsp.init || !dsp.update || !dsp.process || !dsp.shutdown)
-        {
-            dlclose(dsp.handle);
-            dsp.handle = nullptr;
-            dsp.init = nullptr;
-            dsp.update = nullptr;
-            dsp.process = nullptr;
-            dsp.shutdown = nullptr;
-            return false;
-        }
+        dsp.handle = (void*)1;
+        dsp.init = &ech_dsp_initialize;
+        dsp.update = &ech_dsp_update_config;
+        dsp.process = &ech_dsp_process_block;
+        dsp.shutdown = &ech_dsp_shutdown;
         return true;
     }
 
