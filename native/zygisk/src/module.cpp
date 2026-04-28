@@ -50,6 +50,10 @@ extern "C" void echidna_module_attach()
     }
 }
 
+#include "echidna/api.h"
+#include <fcntl.h>
+#include <unistd.h>
+
 class EchidnaZygiskModule : public zygisk::ModuleBase {
 public:
     void onLoad(zygisk::Api *api, JNIEnv *env) override {
@@ -57,13 +61,27 @@ public:
         this->env = env;
     }
 
+    void preAppSpecialize(zygisk::AppSpecializeArgs *args) override {
+        int fd = open("/data/local/tmp/echidna_preset.json", O_RDONLY);
+        if (fd >= 0) {
+            char buf[4096];
+            int n = read(fd, buf, sizeof(buf));
+            if (n > 0) preset_json.assign(buf, n);
+            close(fd);
+        }
+    }
+
     void postAppSpecialize(const zygisk::AppSpecializeArgs *args) override {
         echidna_module_attach();
+        if (!preset_json.empty()) {
+            echidna_set_profile(preset_json.c_str(), preset_json.length());
+        }
     }
 
 private:
     zygisk::Api *api;
     JNIEnv *env;
+    std::string preset_json;
 };
 
 REGISTER_ZYGISK_MODULE(EchidnaZygiskModule)
