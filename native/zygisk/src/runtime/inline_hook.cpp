@@ -535,7 +535,7 @@ namespace echidna
             std::scoped_lock lock(mutex_);
             if (installed_ && target_)
             {
-                if (protect(target_, patch_size_, PROT_READ | PROT_WRITE | PROT_EXEC))
+                if (protect(target_, patch_size_, PROT_READ | PROT_WRITE))
                 {
                     std::memcpy(target_, original_bytes_, patch_size_);
                     __builtin___clear_cache(reinterpret_cast<char *>(target_),
@@ -594,7 +594,7 @@ namespace echidna
             trampoline_size_ = CalculateTrampolineSize(relocation);
             trampoline_size_ += kAArch64HookSize; // Reserve space for patch literal.
             void *trampoline =
-                mmap(nullptr, trampoline_size_, PROT_READ | PROT_WRITE | PROT_EXEC,
+                mmap(nullptr, trampoline_size_, PROT_READ | PROT_WRITE,
                      MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
             if (trampoline == MAP_FAILED)
             {
@@ -627,8 +627,14 @@ namespace echidna
             trampoline_patch->address = reinterpret_cast<uint64_t>(target_) + patch_size_;
             __builtin___clear_cache(reinterpret_cast<char *>(trampoline_),
                                     reinterpret_cast<char *>(trampoline_) + trampoline_size_);
+            if (!protect(trampoline_, trampoline_size_, PROT_READ | PROT_EXEC))
+            {
+                munmap(trampoline_, trampoline_size_);
+                trampoline_ = nullptr;
+                return false;
+            }
 
-            if (!protect(target_, patch_size_, PROT_READ | PROT_WRITE | PROT_EXEC))
+            if (!protect(target_, patch_size_, PROT_READ | PROT_WRITE))
             {
                 munmap(trampoline_, trampoline_size_);
                 trampoline_ = nullptr;
