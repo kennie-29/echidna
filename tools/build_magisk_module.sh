@@ -28,7 +28,7 @@ fi
 rm -rf "${OUT_DIR}"
 mkdir -p "${OUT_DIR}/zygisk" "${OUT_DIR}/system/lib64" "${OUT_DIR}/common"
 
-cp "${ZYGISK_LIB}" "${OUT_DIR}/zygisk/libechidna.so"
+cp "${ZYGISK_LIB}" "${OUT_DIR}/zygisk/arm64-v8a.so"
 cp "${DSP_LIB}" "${OUT_DIR}/system/lib64/libech_dsp.so"
 if [[ -f "${OFFSETS_FILE}" ]]; then
   mkdir -p "${OUT_DIR}/common"
