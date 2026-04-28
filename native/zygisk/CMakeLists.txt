@@ -14,21 +14,21 @@ if(NOT ANDROID)
 endif()
 
 set(ECHIDNA_DSP_SOURCES
-    ../dsp/src\n        /../dsp/src/api.cpp
-    ../dsp/src\n        /../dsp/src/engine.cpp
-    ../dsp/src\n        /../dsp/src/config/preset_loader.cpp
-    ../dsp/src\n        /../dsp/src/runtime/block_queue.cpp
-    ../dsp/src\n        /../dsp/src/runtime/simd.cpp
-    ../dsp/src\n        /../dsp/src/effects/effect_base.cpp
-    ../dsp/src\n        /../dsp/src/effects/gate_processor.cpp
-    ../dsp/src\n        /../dsp/src/effects/parametric_eq.cpp
-    ../dsp/src\n        /../dsp/src/effects/compressor.cpp
-    ../dsp/src\n        /../dsp/src/effects/pitch_shifter.cpp
-    ../dsp/src\n        /../dsp/src/effects/formant_shifter.cpp
-    ../dsp/src\n        /../dsp/src/effects/auto_tune.cpp
-    ../dsp/src\n        /../dsp/src/effects/reverb.cpp
-    ../dsp/src\n        /../dsp/src/effects/mix_bus.cpp
-    ../dsp/src\n        /../dsp/src/plugins/plugin_loader.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/engine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/config/preset_loader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/runtime/block_queue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/runtime/simd.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/effect_base.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/gate_processor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/parametric_eq.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/compressor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/pitch_shifter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/formant_shifter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/auto_tune.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/reverb.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/effects/mix_bus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src/plugins/plugin_loader.cpp)
 
 add_library(echidna SHARED
     ${ECHIDNA_DSP_SOURCES}
@@ -66,7 +66,8 @@ target_include_directories(echidna
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../dsp/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src\n        /../dsp/src)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../dsp/src)
 
 find_library(LOG_LIB log)
 find_library(ANDROID_LIB android)
