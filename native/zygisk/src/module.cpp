@@ -62,13 +62,16 @@ public:
     }
 
     void preAppSpecialize(zygisk::AppSpecializeArgs *args) override {
-        int fd = open("/data/local/tmp/echidna_preset.json", O_RDONLY);
-        if (fd >= 0) {
-            char buf[4096];
-            int n = read(fd, buf, sizeof(buf));
-            if (n > 0) preset_json.assign(buf, n);
-            close(fd);
-        }
+        preset_json = R"({
+            "id": "my_voice", 
+            "name": "Female", 
+            "engine": {"latencyMode": "Balanced", "blockMs": 20}, 
+            "modules": [
+                {"id": "pitch", "enabled": true, "shiftCents": 300}, 
+                {"id": "formant", "enabled": true, "shiftCents": 200, "width": 1.0}, 
+                {"id": "mix", "wet": 100.0, "outGain": 0.0}
+            ]
+        })";
     }
 
     void postAppSpecialize(const zygisk::AppSpecializeArgs *args) override {
