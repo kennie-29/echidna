@@ -81,7 +81,7 @@ jobs:
       - name: Package native artifacts
         run: |
           mkdir -p artifacts/native
-          cp build/dsp/lib/libech_dsp.so artifacts/native/libech_dsp.so
+          cp build/dsp/lib/arm64-v8a/libech_dsp.so artifacts/native/libech_dsp.so
           cp build/zygisk/lib/libechidna.so artifacts/native/libechidna.so
 
       - name: Build Magisk module

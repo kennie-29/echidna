@@ -6,7 +6,7 @@ OUT_DIR="${ROOT_DIR}/out/magisk"
 ZIP_PATH="${ROOT_DIR}/out/echidna-magisk.zip"
 
 ZYGISK_LIB="${ROOT_DIR}/build/zygisk/lib/libechidna.so"
-DSP_LIB="${ROOT_DIR}/build/dsp/lib/libech_dsp.so"
+DSP_LIB="${ROOT_DIR}/build/dsp/lib/arm64-v8a/libech_dsp.so"
 
 VERSION="${ECHIDNA_VERSION:-0.0.0}"
 VERSION_CODE="${ECHIDNA_VERSION_CODE:-}"
