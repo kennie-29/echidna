@@ -93,7 +93,11 @@ namespace echidna
                 return;
             }
 
+#ifdef __ANDROID__
+            fd_ = open("/data/local/tmp/echidna_telemetry_shm", O_RDWR | O_CREAT, 0666);
+#else
             fd_ = shm_open(kTelemetrySharedMemoryName, O_RDWR | O_CREAT, 0666);
+#endif
             if (fd_ < 0)
             {
                 return;
