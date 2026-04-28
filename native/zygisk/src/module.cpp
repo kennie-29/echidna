@@ -4,6 +4,7 @@
 
 #include "runtime/profile_sync_server.h"
 #include "state/shared_state.h"
+#include "zygisk.hpp"
 
 /**
  * @file module.cpp
@@ -48,3 +49,21 @@ extern "C" void echidna_module_attach()
         }
     }
 }
+
+class EchidnaZygiskModule : public zygisk::ModuleBase {
+public:
+    void onLoad(zygisk::Api *api, JNIEnv *env) override {
+        this->api = api;
+        this->env = env;
+    }
+
+    void postAppSpecialize(const zygisk::AppSpecializeArgs *args) override {
+        echidna_module_attach();
+    }
+
+private:
+    zygisk::Api *api;
+    JNIEnv *env;
+};
+
+REGISTER_ZYGISK_MODULE(EchidnaZygiskModule)
