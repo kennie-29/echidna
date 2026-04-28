@@ -51,8 +51,9 @@ target_include_directories(echidna
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 find_library(LOG_LIB log)
+find_library(ANDROID_LIB android)
 if(LOG_LIB)
-    target_link_libraries(echidna PRIVATE ${LOG_LIB})
+    target_link_libraries(echidna PRIVATE ${LOG_LIB} ${ANDROID_LIB})
 endif()
 
 install(TARGETS echidna
